@@ -94,7 +94,9 @@ if st.session_state.artist is None:
 else:
     # Sidebar for navigation
     st.sidebar.header("Navigation")
-    action = st.sidebar.radio("Choose Action", ["Place Order", "View Orders", "Update Order", "Delete Order"])
+    options = ["Place Order", "View Orders", "Update Order", "Delete Order"]
+    index = options.index(st.session_state.action) if st.session_state.action in options else 0
+    action = st.sidebar.radio("Choose Action", options, index=index)
     if st.sidebar.button("Refresh Orders"):
         st.session_state.orders = None  # Force reload
         st.rerun()
