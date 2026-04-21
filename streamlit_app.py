@@ -108,7 +108,6 @@ else:
             additives_options = menu.get_additives()
             additives_index = additives_options.index("None") if "None" in additives_options else 0
             additives = st.selectbox("Additives", additives_options, index=additives_index)
-            additive_parts = st.number_input("Additive Parts", min_value=0, step=1, key="parts_input", on_change=update_parts)
             submitted = st.form_submit_button("Submit Order")
             if submitted:
                 # Extract size name
@@ -129,6 +128,7 @@ else:
                     if st.button("Cancel"):
                         st.info("Order cancelled.")
         # Outside form for dynamic display
+        additive_parts = st.number_input("Additive Parts", min_value=0, step=1, key="parts_input", on_change=update_parts)
         if st.session_state.additive_parts > 0:
             st.write(f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}")
         else:
@@ -187,7 +187,6 @@ else:
                     additives_options = menu.get_additives()
                     additives_index = additives_options.index(order.get_additives()) if order.get_additives() in additives_options else (additives_options.index("None") if "None" in additives_options else 0)
                     additives = st.selectbox("Additives", additives_options, index=additives_index)
-                    additive_parts = st.number_input("Additive Parts", min_value=0, step=1, value=order.get_additive_parts(), key="parts_input", on_change=update_parts)
                     submitted = st.form_submit_button("Update Order")
                     if submitted:
                         # Extract size name
@@ -203,6 +202,7 @@ else:
                             del st.session_state.edit_index
                             st.rerun()
                 # Outside form for dynamic display
+                additive_parts = st.number_input("Additive Parts", min_value=0, step=1, value=order.get_additive_parts(), key="parts_input", on_change=update_parts)
                 if st.session_state.additive_parts > 0:
                     st.write(f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}")
                 else:
