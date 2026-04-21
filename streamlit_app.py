@@ -109,6 +109,7 @@ else:
     if st.sidebar.button("Refresh Orders"):
         st.session_state.orders = None  # Force reload
         st.rerun()
+    action = st.session_state.action
 
     if action == "Place Order":
         st.header("Place a New Order")
