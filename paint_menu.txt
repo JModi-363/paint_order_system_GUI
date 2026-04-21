@@ -1,0 +1,3 @@
+BASES ; Acrylic, Oil, Watercolor, Tempera, Gouache
+PRICES ; Small: 1.50, Medium: 2.20, Large: 3.00
+ADDITIVES ; Thickener, Antioxidant, Hardener, Extender, None
