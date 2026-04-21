@@ -138,7 +138,10 @@ else:
         st.header("View Orders")
         orders = load_orders()
         if not orders:
-            st.info("No orders found.")
+            st.info("No orders found. Would you like to place a new order?")
+            if st.button("Place Order"):
+                st.session_state.action = "Place Order"
+                st.rerun()
         else:
             # Prepare data for dataframe
             data = []
@@ -172,7 +175,10 @@ else:
         st.header("Update Order")
         orders = load_orders()
         if not orders:
-            st.info("No orders to update.")
+            st.info("No orders to update. Would you like to place a new order?")
+            if st.button("Place Order"):
+                st.session_state.action = "Place Order"
+                st.rerun()
         else:
             if 'edit_index' in st.session_state and st.session_state.edit_index < len(orders):
                 idx = st.session_state.edit_index
@@ -214,7 +220,10 @@ else:
         st.header("Delete Order")
         orders = load_orders()
         if not orders:
-            st.info("No orders to delete.")
+            st.info("No orders to delete. Would you like to place a new order?")
+            if st.button("Place Order"):
+                st.session_state.action = "Place Order"
+                st.rerun()
         else:
             if 'delete_index' in st.session_state and st.session_state.delete_index < len(orders):
                 idx = st.session_state.delete_index
