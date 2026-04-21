@@ -20,6 +20,11 @@ if 'orders' not in st.session_state:
     st.session_state.orders = None  # Lazy load
 if 'action' not in st.session_state:
     st.session_state.action = 'Place Order'
+if 'additive_parts' not in st.session_state:
+    st.session_state.additive_parts = 0
+
+def update_parts():
+    st.session_state.additive_parts = st.session_state.parts_input
 
 def load_orders():
     """Load orders from orders.txt if not already loaded."""
@@ -103,11 +108,11 @@ else:
             additives_options = menu.get_additives()
             additives_index = additives_options.index("None") if "None" in additives_options else 0
             additives = st.selectbox("Additives", additives_options, index=additives_index)
-            additive_parts = st.number_input("Additive Parts", min_value=0, step=1)
             submitted = st.form_submit_button("Submit Order")
             if submitted:
                 # Extract size name
                 size_name = size.split(' - ')[0]
+                additive_parts = st.session_state.get('additive_parts', 0)
                 order = Paint(st.session_state.artist, paint_base, size_name, additives, additive_parts)
                 order.calculate_cost(menu)
                 st.code(str(order))
@@ -122,6 +127,12 @@ else:
                 with col2:
                     if st.button("Cancel"):
                         st.info("Order cancelled.")
+        # Outside form for dynamic display
+        additive_parts_input = st.number_input("Additive Parts", min_value=0, step=1, key="parts_input", on_change=update_parts)
+        if st.session_state.additive_parts > 0:
+            st.write(f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}")
+        else:
+            st.write("+$0.10 per part.")
 
     elif action == "View Orders":
         st.header("View Orders")
@@ -176,11 +187,11 @@ else:
                     additives_options = menu.get_additives()
                     additives_index = additives_options.index(order.get_additives()) if order.get_additives() in additives_options else (additives_options.index("None") if "None" in additives_options else 0)
                     additives = st.selectbox("Additives", additives_options, index=additives_index)
-                    additive_parts = st.number_input("Additive Parts", min_value=0, step=1, value=order.get_additive_parts())
                     submitted = st.form_submit_button("Update Order")
                     if submitted:
                         # Extract size name
                         size_name = size.split(' - ')[0]
+                        additive_parts = st.session_state.get('additive_parts', order.get_additive_parts())
                         updated_order = Paint(st.session_state.artist, paint_base, size_name, additives, additive_parts)
                         updated_order.calculate_cost(menu)
                         st.code(str(updated_order))
@@ -190,6 +201,12 @@ else:
                             st.success("Order updated!")
                             del st.session_state.edit_index
                             st.rerun()
+                # Outside form for dynamic display
+                additive_parts_input = st.number_input("Additive Parts", min_value=0, step=1, value=order.get_additive_parts(), key="parts_input", on_change=update_parts)
+                if st.session_state.additive_parts > 0:
+                    st.write(f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}")
+                else:
+                    st.write("+$0.10 per part.")
             else:
                 st.info("Select an order to update from View Orders.")
 
