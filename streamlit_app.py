@@ -53,6 +53,10 @@ def load_orders():
     try:
         script_dir = os.path.dirname(__file__)
         file_path = os.path.join(script_dir, "orders.txt")
+        # Auto-create orders.txt if it doesn't exist
+        if not os.path.exists(file_path):
+            with open(file_path, 'w') as f:
+                pass  # Just create the file
         st.write(f"DEBUG: Reading from {file_path}")  # Debug line
         with open(file_path, 'r') as f:
             lines = f.readlines()
