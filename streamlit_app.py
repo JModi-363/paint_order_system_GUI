@@ -44,12 +44,11 @@ def update_parts():
 
 def load_orders():
     """
-    Load orders from orders.txt if not already loaded.
+    Load orders from orders.txt.
+    Always reads fresh from file to ensure latest orders are displayed.
     Returns:
         list: List of Paint order objects.
     """
-    if st.session_state.orders is not None:
-        return st.session_state.orders
     try:
         script_dir = os.path.dirname(__file__)
         file_path = os.path.join(script_dir, "orders.txt")
