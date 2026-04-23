@@ -27,11 +27,19 @@ if 'action' not in st.session_state:
     st.session_state.action = 'Place Order'
 if 'additive_parts' not in st.session_state:
     st.session_state.additive_parts = 0
-
+if 'last_additives_choice' not in st.session_state:
+    st.session_state.last_additives_choice = "none"
+if 'additive_parts_update' not in st.session_state:
+    st.session_state.additive_parts_update = 0
+if 'last_additives_choice_update' not in st.session_state:
+    st.session_state.last_additives_choice_update = "none"
 
 def update_parts():
-    """Update additive parts in session state."""
-    st.session_state.additive_parts = st.session_state.parts_input
+    """Update additive parts in session state based on which widget triggered the callback."""
+    if "parts_input" in st.session_state and st.session_state["parts_input"] != st.session_state.additive_parts:
+        st.session_state.additive_parts = st.session_state.parts_input
+    if "parts_input_update" in st.session_state and st.session_state["parts_input_update"] != st.session_state.additive_parts_update:
+        st.session_state.additive_parts_update = st.session_state.parts_input_update
 
 
 def load_orders():
@@ -302,6 +310,7 @@ else:
                         if st.button("Confirm Update"):
                             orders[idx] = updated_order
                             save_order(updated_order)  # Note: This appends, so file will have duplicate, but for simplicity
+                            st.session_state.orders = None  # Force reload orders for other tabs
                             st.success("Order updated!")
                             del st.session_state.edit_index
                             st.rerun()
