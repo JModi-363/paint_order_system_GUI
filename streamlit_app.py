@@ -1,9 +1,13 @@
-import streamlit as st
+
 import os
 from datetime import datetime
+
+import streamlit as st
+
 from Artist import Artist
 from PaintMenu import PaintMenu
 from Paint import Paint
+
 
 # Load menu once
 script_dir = os.path.dirname(__file__)
@@ -12,6 +16,7 @@ menu = PaintMenu.from_file(menu_file_path)
 if not menu:
     st.error("Menu could not be loaded. Check paint_menu.txt.")
     st.stop()
+
 
 # Session state init
 if 'artist' not in st.session_state:
@@ -23,11 +28,18 @@ if 'action' not in st.session_state:
 if 'additive_parts' not in st.session_state:
     st.session_state.additive_parts = 0
 
+
 def update_parts():
+    """Update additive parts in session state."""
     st.session_state.additive_parts = st.session_state.parts_input
 
+
 def load_orders():
-    """Load orders from orders.txt if not already loaded."""
+    """
+    Load orders from orders.txt if not already loaded.
+    Returns:
+        list: List of Paint order objects.
+    """
     if st.session_state.orders is not None:
         return st.session_state.orders
     try:
@@ -70,9 +82,11 @@ def load_orders():
         st.session_state.orders = []
         return []
 
+
 def save_order(order):
     """Save order using the Paint.save method."""
     order.save()
+
 
 # Main app
 st.title("Paint Order System")
@@ -91,6 +105,7 @@ if st.session_state.artist is None:
                 st.rerun()
             else:
                 st.error("Please fill all fields.")
+
 else:
     # Sidebar for navigation
     st.sidebar.header("Navigation")
@@ -115,17 +130,38 @@ else:
         st.header("Place a New Order")
         with st.form("order_form"):
             paint_base = st.selectbox("Paint Base", menu.get_paint_base())
-            size_options = [f"{s.split(':')[0].strip()} - ${s.split(':')[1].strip()}" for s in menu.get_size()]
+            size_options = [
+                f"{s.split(':')[0].strip()} - ${s.split(':')[1].strip()}"
+                for s in menu.get_size()
+            ]
             size = st.selectbox("Size", size_options)
             additives_options = menu.get_additives()
-            additives_index = additives_options.index("None") if "None" in additives_options else 0
-            additives = st.selectbox("Additives", additives_options, index=additives_index)
+            additives_index = (
+                additives_options.index("None") if "None" in additives_options else 0
+            )
+            additives = st.selectbox(
+                "Additives", additives_options, index=additives_index
+            )
+            show_parts = additives.lower() != "none"
+            if show_parts:
+                additive_parts = st.number_input(
+                    "Additive Parts", min_value=0, step=1, key="parts_input", on_change=update_parts
+                )
+                if st.session_state.additive_parts > 0:
+                    st.write(
+                        f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}"
+                    )
+                else:
+                    st.write("+$0.10 per part.")
+            else:
+                additive_parts = 0
             submitted = st.form_submit_button("Submit Order")
             if submitted:
                 # Extract size name
                 size_name = size.split(' - ')[0]
-                additive_parts = st.session_state.get('additive_parts', 0)
-                order = Paint(st.session_state.artist, paint_base, size_name, additives, additive_parts)
+                order = Paint(
+                    st.session_state.artist, paint_base, size_name, additives, additive_parts
+                )
                 order.calculate_cost(menu)
                 st.code(str(order))
                 col1, col2 = st.columns(2)
@@ -197,20 +233,51 @@ else:
                 order = orders[idx]
                 st.write(f"Updating: {order}")
                 with st.form("update_form"):
-                    paint_base = st.selectbox("Paint Base", menu.get_paint_base(), index=menu.get_paint_base().index(order.get_paint_base()) if order.get_paint_base() in menu.get_paint_base() else 0)
-                    size_options = [f"{s.split(':')[0].strip()} - ${s.split(':')[1].strip()}" for s in menu.get_size()]
+                    paint_base = st.selectbox(
+                        "Paint Base",
+                        menu.get_paint_base(),
+                        index=menu.get_paint_base().index(order.get_paint_base())
+                        if order.get_paint_base() in menu.get_paint_base() else 0,
+                    )
+                    size_options = [
+                        f"{s.split(':')[0].strip()} - ${s.split(':')[1].strip()}"
+                        for s in menu.get_size()
+                    ]
                     size_display = f"{order.get_size()} - ${dict(s.split(':') for s in menu.get_size()).get(order.get_size(), '0.00')}"
                     size_index = size_options.index(size_display) if size_display in size_options else 0
                     size = st.selectbox("Size", size_options, index=size_index)
                     additives_options = menu.get_additives()
-                    additives_index = additives_options.index(order.get_additives()) if order.get_additives() in additives_options else (additives_options.index("None") if "None" in additives_options else 0)
+                    additives_index = (
+                        additives_options.index(order.get_additives())
+                        if order.get_additives() in additives_options
+                        else (additives_options.index("None") if "None" in additives_options else 0)
+                    )
                     additives = st.selectbox("Additives", additives_options, index=additives_index)
+                    show_parts = additives.lower() != "none"
+                    if show_parts:
+                        additive_parts = st.number_input(
+                            "Additive Parts",
+                            min_value=0,
+                            step=1,
+                            value=order.get_additive_parts(),
+                            key="parts_input",
+                            on_change=update_parts,
+                        )
+                        if st.session_state.additive_parts > 0:
+                            st.write(
+                                f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}"
+                            )
+                        else:
+                            st.write("+$0.10 per part.")
+                    else:
+                        additive_parts = 0
                     submitted = st.form_submit_button("Update Order")
                     if submitted:
                         # Extract size name
                         size_name = size.split(' - ')[0]
-                        additive_parts = st.session_state.get('additive_parts', order.get_additive_parts())
-                        updated_order = Paint(st.session_state.artist, paint_base, size_name, additives, additive_parts)
+                        updated_order = Paint(
+                            st.session_state.artist, paint_base, size_name, additives, additive_parts
+                        )
                         updated_order.calculate_cost(menu)
                         st.code(str(updated_order))
                         if st.button("Confirm Update"):
