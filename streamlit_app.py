@@ -1,375 +1,258 @@
+"""
+    creating the paint order class for mural projects
+"""
 
+#  importing the other classes we will need
 import os
 from datetime import datetime
-
-import streamlit as st
-
 from Artist import Artist
 from PaintMenu import PaintMenu
-from Paint import Paint
 
 
-# Load menu once
-script_dir = os.path.dirname(__file__)
-menu_file_path = os.path.join(script_dir, "paint_menu.txt")
-menu = PaintMenu.from_file(menu_file_path)
-if not menu:
-    st.error("Menu could not be loaded. Check paint_menu.txt.")
-    st.stop()
+class Paint:
+    # ☕ The __init__ method is the constructor for our class.
+    # It's called when we create a new Paint order object.
+    # We've added the artist who is ordering and a timestamp.
+    def __init__(
+        self, artist, paint_base, size, additives, additive_parts
+    ):
+        # --- Private Attributes 🔐 ---
+        self.__artist = artist  # The Artist object
+        # Automatically set to the current time
+        self.__timestamp = datetime.now()
+        self.__paint_base = paint_base
+        self.__size = size
+        self.__additives = additives
+        self.__additive_parts = additive_parts
+        self.__cost = 0.0  # Cost is calculated *after* creation.
+
+    # --- Getters 📥 ---
+    # These methods safely get the values of our private attributes.
+    def get_artist(self):
+        return self.__artist
+
+    def get_timestamp(self):
+        return self.__timestamp
+
+    def get_paint_base(self):
+        return self.__paint_base
+
+    def get_size(self):
+        return self.__size
+
+    def get_additives(self):
+        return self.__additives
+
+    def get_additive_parts(self):
+        return self.__additive_parts
+
+    def get_cost(self):
+        return self.__cost
+
+    # --- Setters ✍️ ---
+    # Setters are less common when logic is handled by other methods,
+    # but they are included here for completeness.
+    def set_paint_base(self, paint_base):
+        self.__paint_base = paint_base
+
+    def set_size(self, size):
+        self.__size = size
+
+    def set_additives(self, additives):
+        self.__additives = additives
+
+    def set_additive_parts(self, additive_parts):
+        self.__additive_parts = additive_parts
+
+    def set_cost(self, cost):
+        self.__cost = cost
+
+    # --- Magic Method: __str__ 💬 ---
+    # This replaces the old `get_summary()` method.
+    # It provides a user-friendly receipt of the order.
+    def __str__(self):
+        # The .strftime() method formats the timestamp into a readable string.
+        formatted_time = self.__timestamp.strftime("%Y-%m-%d %I:%M %p")
+        # The :.2f formats the cost to two decimal places (like money).
+        artist_name = f"{self.__artist.get_fname()} {self.__artist.get_lname()}"
+        return (
+            f"---- RECEIPT ----\n"
+            f"Order for: {artist_name}\n"
+            f"Time: {formatted_time}\n"
+            f"-----------------------\n"
+            f"Item: {self.__size} {self.__paint_base}\n"
+            f" - Additives: {self.__additives} ({self.__additive_parts})\n"
+            f"-----------------------\n"
+            f"TOTAL: ${self.__cost:.2f}\n"
+            f"-----------------------"
+        )
+
+    # --- Main Logic Methods ---
+
+    def calculate_cost(self, menu: PaintMenu):
+        """
+        🧮 FINAL LOGIC: Calculates the total cost of the paint order.
+        - Base price is from the SIZE.
+        - Upcharge is from additive parts.
+        """
+        base_price = 0.0
+        # Find the price for the selected size.
+        # The menu.prices is a list like ['Small: 3.00', 'Medium: 4.00']
+        for price_entry in menu.get_size():
+            size_name, price_str = price_entry.split(':')
+            if size_name.strip().lower() == self.__size.lower():
+                base_price = float(price_str.strip())
+                break  # Found the price, no need to look further
+
+        # Add cost for additives: $0.10 per additive part (integer)
+        additives_upcharge = 0.0
+        if self.__additives.lower() != "none" and self.__additive_parts:
+            additives_upcharge = self.__additive_parts * 0.10
+
+        # Set the final cost on the object
+        self.__cost = base_price + additives_upcharge
+
+    def save(self, file_path):
+        """💾 Saves the completed order to the orders.txt file at the given path."""
+        # Format the order string to be saved in the file.
+        artist_name = f"{self.__artist.get_fname()} {self.__artist.get_lname()}"
+        artist_location = self.__artist.get_location()
+        order_string = (
+            f"{artist_name},{artist_location},{self.__timestamp.isoformat()},"
+            f"{self.__paint_base},{self.__size},"
+            f"{self.__additives},{self.__additive_parts},{self.__cost:.2f}\n"
+        )
+        try:
+            with open(file_path, "a") as f:
+                f.write(order_string)
+            print("Order saved successfully.")
+        except IOError as e:
+            print(f"Error saving order: {e}")
+
+    # --- Factory Classmethod 🏭 ---
+    @classmethod
+    def from_input(cls, artist: Artist, menu: PaintMenu):
+        """
+        CORRECTED LOGIC: Factory method to create a Paint order.
+        It asks for paint base, then size, additives, and number of parts.
+        """
+        print("\nStarting new order.")
+
+        # --- 1. Choose Paint Base ---
+        print("\n--- Paint Options ---")
+        # We use enumerate to get a number for each item (e.g., 1. Latte)
+        paint_options = menu.get_paint_base()
+        for i, item in enumerate(paint_options):
+            print(f"  {i+1}. {item}")
+        while True:
+            try:
+                choice = int(input("Select a paint base: "))
+                if 1 <= choice <= len(paint_options):
+                    paint_type = paint_options[choice - 1]
+                    break
+                else:
+                    print("Invalid number. Please choose from the list.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
+        # --- 2. Choose Size ---
+        print("\n--- Size Options ---")
+        size_options = [s.split(':')[0].strip() for s in menu.get_size()]
+        for i, item in enumerate(size_options):
+            print(f"  {i+1}. {item}")
+        while True:
+            try:
+                choice = int(input("Select a size: "))
+                if 1 <= choice <= len(size_options):
+                    size = size_options[choice - 1]
+                    break
+                else:
+                    print("Invalid number. Please choose from the list.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
 
 
-# Session state init
-if 'artist' not in st.session_state:
-    st.session_state.artist = None
-if 'orders' not in st.session_state:
-    st.session_state.orders = None  # Lazy load
-if 'action' not in st.session_state:
-    st.session_state.action = 'Place Order'
-if 'additive_parts_place_order' not in st.session_state:
-    st.session_state.additive_parts_place_order = 0
-if 'last_additives_choice_place_order' not in st.session_state:
-    st.session_state.last_additives_choice_place_order = "none"
-if 'additive_parts_update' not in st.session_state:
-    st.session_state.additive_parts_update = 0
-if 'last_additives_choice_update' not in st.session_state:
-    st.session_state.last_additives_choice_update = "none"
+        # --- 3. Choose Additives ---
+        print("\n--- Additive Options ---")
+        additives_options = menu.get_additives()
+        for i, item in enumerate(additives_options):
+            print(f"  {i+1}. {item}")
+        while True:
+            try:
+                choice = int(input("Select an additive (or 'None'): "))
+                if 1 <= choice <= len(additives_options):
+                    additives = additives_options[choice - 1]
+                    break
+                else:
+                    print("Invalid number. Please choose from the list.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
 
-def update_parts():
-    """Update additive parts in session state based on which widget triggered the callback."""
-    if "parts_input_place_order" in st.session_state:
-        st.session_state.additive_parts_place_order = st.session_state.parts_input_place_order
-    if "parts_input_update" in st.session_state:
-        st.session_state.additive_parts_update = st.session_state.parts_input_update
+        # --- 4. Choose Parts Additive (integer parts) ---
+        # New behavior: ask for an integer number of parts (>= 0).
+        additive_parts = 0
+        if additives.lower() != "none":
+            print(
+                "\nEnter number of additive parts (+$0.10 per part)."
+            )
+            while True:
+                try:
+                    parts_input = input("How many parts? ").strip()
+                    additive_parts = int(parts_input)
+                    if additive_parts >= 0:
+                        break
+                    else:
+                        print("Please enter a non-negative integer.")
+                except ValueError:
+                    print("Invalid input. Please enter a whole number.")
+
+        # Now we have all the info to create a temporary object.
+        new_order = cls(artist, paint_type, size, additives, additive_parts)
+
+        # Use the object's own method to calculate its cost based on the menu.
+        new_order.calculate_cost(menu)
+
+        # Return the fully formed, ready-to-go Paint order object.
+        return new_order
 
 
-def load_orders():
-    """
-    Load orders from orders.txt.
-    Always reads fresh from file to ensure latest orders are displayed.
-    Returns:
-        list: List of Paint order objects.
-    """
-    import traceback
+# --- Test Area ---
+'''
+if __name__ == "__main__":
+    print("--- 🧪 Testing Coffee Class 🧪 ---")
+
+    # We need a mock Artist and PaintMenu to test.
+    test_emp = Artist("Testy", "McTesterson", "1234")
+
+    # --- PATH CORRECTION for testing ---
+    # Build a robust path to 'menu.txt' for the test run.
+    script_dir = os.path.dirname(__file__)
+    menu_file_path = os.path.join(script_dir, "menu.txt")
+
     try:
-        script_dir = os.path.dirname(__file__)
-        file_path = os.path.join(script_dir, "orders.txt")
-        # Auto-create orders.txt if it doesn't exist
-        if not os.path.exists(file_path):
-            with open(file_path, 'w') as f:
-                pass  # Just create the file
-        st.write(f"DEBUG: Reading from {file_path}")  # Debug line
-        with open(file_path, 'r') as f:
-            lines = f.readlines()
-        st.write(f"DEBUG: Found {len(lines)} lines in file")  # Debug line
-        orders = []
-        for line in lines:
-            parts = line.strip().split(',')
-            st.write(f"DEBUG: Parts = {parts}, count = {len(parts)}")  # Debug line
-            if len(parts) == 8:
-                # artist_name,location,timestamp,paint_base,size,additives,additive_parts,cost
-                artist_name_parts = parts[0].split()
-                if len(artist_name_parts) >= 2:
-                    fname = artist_name_parts[0]
-                    lname = ' '.join(artist_name_parts[1:])
-                else:
-                    fname = parts[0]
-                    lname = ''
-                location = parts[1]
-                artist = Artist(fname, lname, location)
-                timestamp = datetime.fromisoformat(parts[2])
-                paint_base = parts[3]
-                size = parts[4]
-                additives = parts[5]
-                additive_parts = int(parts[6])
-                cost = float(parts[7])
-                order = Paint(artist, paint_base, size, additives, additive_parts)
-                # Set private attributes
-                order._Paint__timestamp = timestamp
-                order._Paint__cost = cost
-                orders.append(order)
-                st.write(f"DEBUG: Loaded order {len(orders)}: {order}")  # Debug line
-        st.session_state.orders = orders
-        return orders
+        # Use the full, correct path to load the menu.
+        test_menu = PaintMenu.from_file(menu_file_path)
+
+        if test_menu:  # Proceed only if menu loaded successfully
+            # 1. Test the from_input() factory method
+            print("\n--- 1. Testing from_input() ---")
+            # This will prompt you to enter an order in the terminal.
+            my_order = Paint.from_input(test_emp, test_menu)
+
+            # 2. Test the __str__() method (the receipt)
+            print("\n--- 2. Testing __str__() ---")
+            print(my_order)
+
+            # 3. Test the save() method
+            print("\n--- 3. Testing save() ---")
+            my_order.save()
+            print("Check 'MontysOOP/orders.txt' to see if the order was saved.")
+        else:
+            print("\n🔥 ERROR: Could not load menu. Aborting tests.")
+
     except FileNotFoundError:
-        st.warning("orders.txt not found - creating empty list")
-        st.session_state.orders = []
-        return []
-    except Exception as e:
-        st.error(f"Error loading orders: {e}")
-        st.write(traceback.format_exc())  # Show full traceback
-        st.session_state.orders = []
-        return []
-
-
-def save_order(order):
-    """Save order using the Paint.save method."""
-    order.save()
-
-
-# Main app
-st.title("Paint Order System")
-st.write(f"DEBUG: artist = {st.session_state.artist}")  # Debug
-st.write(f"DEBUG: action = {st.session_state.action}")  # Debug
-
-if st.session_state.artist is None:
-    st.header("Artist Login")
-    with st.form("login_form"):
-        fname = st.text_input("First Name")
-        lname = st.text_input("Last Name")
-        location = st.text_input("Studio Number")
-        submitted = st.form_submit_button("Login")
-        if submitted:
-            if fname and lname and location:
-                st.session_state.artist = Artist(fname, lname, location)
-                st.success("Logged in successfully!")
-                st.rerun()
-            else:
-                st.error("Please fill all fields.")
-
-else:
-    # Sidebar for navigation
-    st.sidebar.header("Navigation")
-    if st.sidebar.button("Place Order"):
-        st.session_state.action = "Place Order"
-        st.rerun()
-    if st.sidebar.button("View Orders"):
-        st.session_state.action = "View Orders"
-        st.rerun()
-    if st.sidebar.button("Update Order"):
-        st.session_state.action = "Update Order"
-        st.rerun()
-    if st.sidebar.button("Delete Order"):
-        st.session_state.action = "Delete Order"
-        st.rerun()
-    if st.sidebar.button("Refresh Orders"):
-        st.session_state.orders = None  # Force reload
-        st.rerun()
-    action = st.session_state.action
-
-    if action == "Place Order":
-        st.header("Place a New Order")
-        with st.form("order_form"):
-            paint_base = st.selectbox("Paint Base", menu.get_paint_base())
-            size_options = [
-                f"{s.split(':')[0].strip()} - ${s.split(':')[1].strip()}"
-                for s in menu.get_size()
-            ]
-            size = st.selectbox("Size", size_options)
-            additives_options = menu.get_additives()
-            additives_index = (
-                additives_options.index("None") if "None" in additives_options else 0
-            )
-            additives = st.selectbox(
-                "Additives", additives_options, index=additives_index
-            )
-            submitted = st.form_submit_button("Submit Order")
-
-        # Outside the form: Additive parts input and confirmation buttons
-        show_parts = additives.lower() != "none"
-        if show_parts:
-            # Ensure key is unique for this context or shared appropriately
-            if st.session_state.get('last_additives_choice_place_order') != additives:
-                st.session_state.additive_parts_place_order = 0
-                st.session_state.last_additives_choice_place_order = additives
-
-            additive_parts_value = st.number_input(
-                "Additive Parts",
-                min_value=0,
-                step=1,
-                value=st.session_state.additive_parts_place_order,
-                key="parts_input_place_order",
-                on_change=update_parts
-            )
-            st.session_state.additive_parts_place_order = additive_parts_value # Update session state directly
-            if st.session_state.additive_parts_place_order > 0:
-                st.write(
-                    f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts_place_order * 0.10):.2f}"
-                )
-            else:
-                st.write("+$0.10 per part.")
-        else:
-            st.session_state.additive_parts_place_order = 0 # Reset if no additives selected
-            st.session_state.last_additives_choice_place_order = "none" # Track last choice
-
-        if submitted:
-            # Extract size name
-            size_name = size.split(' - ')[0]
-            order = Paint(
-                st.session_state.artist, paint_base, size_name, additives, st.session_state.additive_parts_place_order
-            )
-            order.calculate_cost(menu)
-            st.session_state.current_order_for_confirmation = order # Store order for confirmation
-            st.code(str(order))
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Confirm and Save", key="confirm_save_btn"):
-                    save_order(st.session_state.current_order_for_confirmation)
-                    st.session_state.orders = None  # Force reload orders for other tabs
-                    st.success("Order saved!")
-                    del st.session_state.current_order_for_confirmation # Clear after saving
-                    st.rerun()
-            with col2:
-                if st.button("Cancel Order", key="cancel_order_btn"):
-                    st.info("Order cancelled.")
-                    del st.session_state.current_order_for_confirmation # Clear
-                    st.rerun()
-
-
-    elif action == "View Orders":
-        st.header("View Orders")
-        st.write(f"DEBUG: Current action = {action}")  # Debug
-        orders = load_orders()
-        st.write(f"DEBUG: Loaded {len(orders)} orders")  # Debug
-        if not orders:
-            st.info("No orders found. Would you like to place a new order?")
-            if st.button("Place Order"):
-                st.session_state.action = "Place Order"
-                st.rerun()
-        else:
-            # Prepare data for dataframe
-            data = []
-            for order in orders:
-                item = f"{order.get_size()} {order.get_paint_base()} - {order.get_additives()} ({order.get_additive_parts()})"
-                data.append({
-                    "Timestamp": order.get_timestamp().strftime("%Y-%m-%d %I:%M %p"),
-                    "Item": item,
-                    "Cost": f"${order.get_cost():.2f}",
-                    "Artist": f"{order.get_artist().get_fname()} {order.get_artist().get_lname()}"
-                })
-            st.dataframe(data)
-            # Buttons in table? Streamlit dataframe doesn't support buttons directly, so perhaps list with buttons
-            st.subheader("Quick Actions")
-            for i, order in enumerate(orders):
-                col1, col2, col3 = st.columns([3,1,1])
-                with col1:
-                    st.write(f"Order {i+1}: {data[i]['Item']}")
-                with col2:
-                    if st.button(f"Edit {i+1}", key=f"edit_{i}"):
-                        st.session_state.edit_index = i
-                        st.session_state.action = "Update Order"
-                        st.rerun()
-                with col3:
-                    if st.button(f"Delete {i+1}", key=f"delete_{i}"):
-                        st.session_state.delete_index = i
-                        st.session_state.action = "Delete Order"
-                        st.rerun()
-
-    elif action == "Update Order":
-        st.header("Update Order")
-        orders = load_orders()
-        if not orders:
-            st.info("No orders to update. Would you like to place a new order?")
-            if st.button("Place Order"):
-                st.session_state.action = "Place Order"
-                st.rerun()
-        else:
-            if 'edit_index' in st.session_state and st.session_state.edit_index < len(orders):
-                idx = st.session_state.edit_index
-                order = orders[idx]
-                st.write(f"Updating: {order}")
-                with st.form("update_form"):
-                    paint_base = st.selectbox(
-                        "Paint Base",
-                        menu.get_paint_base(),
-                        index=menu.get_paint_base().index(order.get_paint_base())
-                        if order.get_paint_base() in menu.get_paint_base() else 0,
-                    )
-                    size_options = [
-                        f"{s.split(':')[0].strip()} - ${s.split(':')[1].strip()}"
-                        for s in menu.get_size()
-                    ]
-                    size_display = f"{order.get_size()} - ${dict(s.split(':') for s in menu.get_size()).get(order.get_size(), '0.00')}"
-                    size_index = size_options.index(size_display) if size_display in size_options else 0
-                    size = st.selectbox("Size", size_options, index=size_index)
-                    additives_options = menu.get_additives()
-                    additives_index = (
-                        additives_options.index(order.get_additives())
-                        if order.get_additives() in additives_options
-                        else (additives_options.index("None") if "None" in additives_options else 0)
-                    )
-                    additives = st.selectbox("Additives", additives_options, index=additives_index)
-                    show_parts = additives.lower() != "none"
-                    if show_parts:
-                        additive_parts = st.number_input(
-                            "Additive Parts",
-                            min_value=0,
-                            step=1,
-                            value=order.get_additive_parts(),
-                            key="parts_input",
-                            on_change=update_parts,
-                        )
-                        if st.session_state.additive_parts > 0:
-                            st.write(
-                                f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}"
-                            )
-                        else:
-                            st.write("+$0.10 per part.")
-                    else:
-                        additive_parts = 0
-                    submitted = st.form_submit_button("Update Order")
-                    if submitted:
-                        # Extract size name
-                        size_name = size.split(' - ')[0]
-                        updated_order = Paint(
-                            st.session_state.artist, paint_base, size_name, additives, additive_parts
-                        )
-                        updated_order.calculate_cost(menu)
-                        st.code(str(updated_order))
-                        if st.button("Confirm Update"):
-                            orders[idx] = updated_order
-                            save_order(updated_order)  # Note: This appends, so file will have duplicate, but for simplicity
-                            st.session_state.orders = None  # Force reload orders for other tabs
-                            st.success("Order updated!")
-                            del st.session_state.edit_index
-                            st.rerun()
-                # Outside form for dynamic display
-                show_parts_update = additives.lower() != "none"
-                if show_parts_update:
-                    # Ensure key is unique for this context or shared appropriately
-                    # Reset additive_parts if additives changed to None *before* input
-                    if st.session_state.get('last_additives_choice_update') != additives:
-                        st.session_state.additive_parts_update = 0
-                        st.session_state.last_additives_choice_update = additives
-
-                    additive_parts_value_update = st.number_input(
-                        "Additive Parts",
-                        min_value=0,
-                        step=1,
-                        value=st.session_state.additive_parts_update or order.get_additive_parts(),
-                        key="parts_input_update",
-                        on_change=update_parts
-                    )
-                    st.session_state.additive_parts_update = additive_parts_value_update
-                    if st.session_state.additive_parts_update > 0:
-                        st.write(
-                            f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts_update * 0.10):.2f}"
-                        )
-                    else:
-                        st.write("+$0.10 per part.")
-                else:
-                    st.session_state.additive_parts_update = 0
-                    st.session_state.last_additives_choice_update = "none"
-
-            else:
-                st.info("Select an order to update from View Orders.")
-
-    elif action == "Delete Order":
-        st.header("Delete Order")
-        orders = load_orders()
-        if not orders:
-            st.info("No orders to delete. Would you like to place a new order?")
-            if st.button("Place Order"):
-                st.session_state.action = "Place Order"
-                st.rerun()
-        else:
-            if 'delete_index' in st.session_state and st.session_state.delete_index < len(orders):
-                idx = st.session_state.delete_index
-                order = orders[idx]
-                st.write(f"Deleting: {order}")
-                if st.button("Confirm Delete"):
-                    del orders[idx]
-                    st.success("Order deleted from session. (File not updated for simplicity)")
-                    del st.session_state.delete_index
-                    st.rerun()
-            else:
-                st.info("Select an order to delete from View Orders.")
+        print(
+            f"\n🔥 ERROR: '{menu_file_path}' not found. "
+            "Cannot run tests without the menu file."
+        )
+'''
