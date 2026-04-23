@@ -25,10 +25,10 @@ if 'orders' not in st.session_state:
     st.session_state.orders = None  # Lazy load
 if 'action' not in st.session_state:
     st.session_state.action = 'Place Order'
-if 'additive_parts' not in st.session_state:
-    st.session_state.additive_parts = 0
-if 'last_additives_choice' not in st.session_state:
-    st.session_state.last_additives_choice = "none"
+if 'additive_parts_place_order' not in st.session_state:
+    st.session_state.additive_parts_place_order = 0
+if 'last_additives_choice_place_order' not in st.session_state:
+    st.session_state.last_additives_choice_place_order = "none"
 if 'additive_parts_update' not in st.session_state:
     st.session_state.additive_parts_update = 0
 if 'last_additives_choice_update' not in st.session_state:
@@ -36,9 +36,9 @@ if 'last_additives_choice_update' not in st.session_state:
 
 def update_parts():
     """Update additive parts in session state based on which widget triggered the callback."""
-    if "parts_input" in st.session_state and st.session_state["parts_input"] != st.session_state.additive_parts:
-        st.session_state.additive_parts = st.session_state.parts_input
-    if "parts_input_update" in st.session_state and st.session_state["parts_input_update"] != st.session_state.additive_parts_update:
+    if "parts_input_place_order" in st.session_state:
+        st.session_state.additive_parts_place_order = st.session_state.parts_input_place_order
+    if "parts_input_update" in st.session_state:
         st.session_state.additive_parts_update = st.session_state.parts_input_update
 
 
