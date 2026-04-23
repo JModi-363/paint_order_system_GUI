@@ -49,14 +49,18 @@ def load_orders():
     Returns:
         list: List of Paint order objects.
     """
+    import traceback
     try:
         script_dir = os.path.dirname(__file__)
         file_path = os.path.join(script_dir, "orders.txt")
+        st.write(f"DEBUG: Reading from {file_path}")  # Debug line
         with open(file_path, 'r') as f:
             lines = f.readlines()
+        st.write(f"DEBUG: Found {len(lines)} lines in file")  # Debug line
         orders = []
         for line in lines:
             parts = line.strip().split(',')
+            st.write(f"DEBUG: Parts = {parts}, count = {len(parts)}")  # Debug line
             if len(parts) == 8:
                 # artist_name,location,timestamp,paint_base,size,additives,additive_parts,cost
                 artist_name_parts = parts[0].split()
@@ -79,13 +83,16 @@ def load_orders():
                 order._Paint__timestamp = timestamp
                 order._Paint__cost = cost
                 orders.append(order)
+                st.write(f"DEBUG: Loaded order {len(orders)}: {order}")  # Debug line
         st.session_state.orders = orders
         return orders
     except FileNotFoundError:
+        st.warning("orders.txt not found - creating empty list")
         st.session_state.orders = []
         return []
     except Exception as e:
-        st.error(f"Error loading orders file: {e}")
+        st.error(f"Error loading orders: {e}")
+        st.write(traceback.format_exc())  # Show full traceback
         st.session_state.orders = []
         return []
 
@@ -97,6 +104,8 @@ def save_order(order):
 
 # Main app
 st.title("Paint Order System")
+st.write(f"DEBUG: artist = {st.session_state.artist}")  # Debug
+st.write(f"DEBUG: action = {st.session_state.action}")  # Debug
 
 if st.session_state.artist is None:
     st.header("Artist Login")
@@ -204,7 +213,9 @@ else:
 
     elif action == "View Orders":
         st.header("View Orders")
+        st.write(f"DEBUG: Current action = {action}")  # Debug
         orders = load_orders()
+        st.write(f"DEBUG: Loaded {len(orders)} orders")  # Debug
         if not orders:
             st.info("No orders found. Would you like to place a new order?")
             if st.button("Place Order"):
