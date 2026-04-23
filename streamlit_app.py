@@ -142,45 +142,64 @@ else:
             additives = st.selectbox(
                 "Additives", additives_options, index=additives_index
             )
-            show_parts = additives.lower() != "none"
-            if show_parts:
-                additive_parts = st.number_input(
-                    "Additive Parts", min_value=0, step=1, key="parts_input", on_change=update_parts
-                )
-                if st.session_state.additive_parts > 0:
-                    st.write(
-                        f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}"
-                    )
-                else:
-                    st.write("+$0.10 per part.")
-            else:
-                additive_parts = 0
+            # We'll handle additive_parts and its display outside the form
             submitted = st.form_submit_button("Submit Order")
-            if submitted:
-                # Extract size name
-                size_name = size.split(' - ')[0]
-                order = Paint(
-                    st.session_state.artist, paint_base, size_name, additives, additive_parts
+
+        # Outside the form for dynamic display of additive parts and confirmation buttons
+        show_parts = additives.lower() != "none"
+        if show_parts:
+            # Ensure key is unique for this context or shared appropriately
+            # Reset additive_parts if additives changed to None *before* input
+            if st.session_state.get('last_additives_choice') != additives:
+                st.session_state.additive_parts = 0
+                st.session_state.last_additives_choice = additives
+
+            additive_parts_value = st.number_input(
+                "Additive Parts",
+                min_value=0,
+                step=1,
+                value=st.session_state.additive_parts,
+                key="parts_input",
+                on_change=update_parts
+            )
+            st.session_state.additive_parts = additive_parts_value # Update session state directly
+            if st.session_state.additive_parts > 0:
+                st.write(
+                    f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}"
                 )
-                order.calculate_cost(menu)
-                st.code(str(order))
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("Confirm and Save"):
-                        save_order(order)
-                        if st.session_state.orders is not None:
-                            st.session_state.orders.append(order)
-                        st.success("Order saved!")
-                        st.rerun()
-                with col2:
-                    if st.button("Cancel"):
-                        st.info("Order cancelled.")
-        # Outside form for dynamic display
-        additive_parts = st.number_input("Additive Parts", min_value=0, step=1, key="parts_input", on_change=update_parts)
-        if st.session_state.additive_parts > 0:
-            st.write(f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}")
+            else:
+                st.write("+$0.10 per part.")
         else:
-            st.write("+$0.10 per part.")
+            st.session_state.additive_parts = 0 # Reset if no additives selected
+            st.session_state.last_additives_choice = "none" # Track last choice
+            # Optionally display "+$0.10 per part." even if no parts, or hide completely
+            # st.write("+$0.10 per part.") # Keep consistency if needed
+
+        if submitted:
+            # Extract size name
+            size_name = size.split(' - ')[0]
+            order = Paint(
+                st.session_state.artist, paint_base, size_name, additives, st.session_state.additive_parts
+            )
+            order.calculate_cost(menu)
+            st.session_state.current_order_for_confirmation = order # Store order for confirmation
+
+            st.code(str(order))
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Confirm and Save", key="confirm_save_btn"):
+                    save_order(st.session_state.current_order_for_confirmation)
+                    if st.session_state.orders is not None:
+                        st.session_state.orders.append(st.session_state.current_order_for_confirmation)
+                    st.success("Order saved!")
+                    del st.session_state.current_order_for_confirmation # Clear after saving
+                    st.rerun()
+            with col2:
+                if st.button("Cancel Order", key="cancel_order_btn"):
+                    st.info("Order cancelled.")
+                    del st.session_state.current_order_for_confirmation # Clear
+                    st.rerun()
+
 
     elif action == "View Orders":
         st.header("View Orders")
@@ -287,11 +306,33 @@ else:
                             del st.session_state.edit_index
                             st.rerun()
                 # Outside form for dynamic display
-                additive_parts = st.number_input("Additive Parts", min_value=0, step=1, value=order.get_additive_parts(), key="parts_input", on_change=update_parts)
-                if st.session_state.additive_parts > 0:
-                    st.write(f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts * 0.10):.2f}")
+                show_parts_update = additives.lower() != "none"
+                if show_parts_update:
+                    # Ensure key is unique for this context or shared appropriately
+                    # Reset additive_parts if additives changed to None *before* input
+                    if st.session_state.get('last_additives_choice_update') != additives:
+                        st.session_state.additive_parts_update = 0
+                        st.session_state.last_additives_choice_update = additives
+
+                    additive_parts_value_update = st.number_input(
+                        "Additive Parts",
+                        min_value=0,
+                        step=1,
+                        value=st.session_state.additive_parts_update or order.get_additive_parts(),
+                        key="parts_input_update",
+                        on_change=update_parts
+                    )
+                    st.session_state.additive_parts_update = additive_parts_value_update
+                    if st.session_state.additive_parts_update > 0:
+                        st.write(
+                            f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts_update * 0.10):.2f}"
+                        )
+                    else:
+                        st.write("+$0.10 per part.")
                 else:
-                    st.write("+$0.10 per part.")
+                    st.session_state.additive_parts_update = 0
+                    st.session_state.last_additives_choice_update = "none"
+
             else:
                 st.info("Select an order to update from View Orders.")
 
