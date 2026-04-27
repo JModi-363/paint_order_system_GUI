@@ -8,6 +8,22 @@ from Artist import Artist
 from PaintMenu import PaintMenu
 from Paint import Paint
 
+# Session state init
+if 'artist' not in st.session_state:
+    st.session_state.artist = None
+if 'orders' not in st.session_state:
+    st.session_state.orders = None  # Lazy load
+if 'action' not in st.session_state:
+    st.session_state.action = 'Place Order'
+if 'additive_parts_place_order' not in st.session_state:
+    st.session_state.additive_parts_place_order = 0
+if 'last_additives_choice_place_order' not in st.session_state:
+    st.session_state.last_additives_choice_place_order = "none"
+if 'additive_parts_update' not in st.session_state:
+    st.session_state.additive_parts_update = 0
+if 'last_additives_choice_update' not in st.session_state:
+    st.session_state.last_additives_choice_update = "none"
+
 # Shared database file path
 DB_FILE_PATH = os.path.join(os.path.dirname(__file__), "orders.db")
 
