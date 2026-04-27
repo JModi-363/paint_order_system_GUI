@@ -21,6 +21,8 @@ if 'additive_parts_update' not in st.session_state:
     st.session_state.additive_parts_update = 0
 if 'last_additives_choice_update' not in st.session_state:
     st.session_state.last_additives_choice_update = "none"
+if 'confirm_order_displayed' not in st.session_state:
+    st.session_state.confirm_order_displayed = False
 
 # Shared database file path
 DB_FILE_PATH = os.path.join(os.path.dirname(__file__), "orders.db")
@@ -213,7 +215,11 @@ else:
             )
             order.calculate_cost(menu)
             st.session_state.current_order_for_confirmation = order # Store order for confirmation
-            st.code(str(order))
+            st.session_state.confirm_order_displayed = True # Show confirmation buttons
+            st.rerun()
+
+        if st.session_state.confirm_order_displayed and 'current_order_for_confirmation' in st.session_state:
+            st.code(str(st.session_state.current_order_for_confirmation))
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Confirm and Save", key="confirm_save_btn"):
@@ -221,11 +227,13 @@ else:
                     st.session_state.orders = None  # Force reload orders for other tabs
                     st.success("Order saved!")
                     del st.session_state.current_order_for_confirmation # Clear after saving
+                    st.session_state.confirm_order_displayed = False # Hide confirmation buttons
                     st.rerun()
             with col2:
                 if st.button("Cancel Order", key="cancel_order_btn"):
                     st.info("Order cancelled.")
                     del st.session_state.current_order_for_confirmation # Clear
+                    st.session_state.confirm_order_displayed = False # Hide confirmation buttons
                     st.rerun()
 
 
