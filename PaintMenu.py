@@ -58,6 +58,14 @@ class PaintMenu:
         menus = {}
 
         try:
+            # If the file doesn't exist, create it with default content
+            if not os.path.exists(filename):
+                with open(filename, 'w') as f:
+                    f.write("BASES ; Acrylic, Oil, Watercolor, Tempera, Gouache\n")
+                    f.write("PRICES ; Small: 1.50, Medium: 2.20, Large: 3.00\n")
+                    f.write("ADDITIVES ; Thickener, Antioxidant, Hardener, Extender, None")
+                print(f"Created default '{filename}'. Please customize it.")
+
             with open(filename, 'r') as file:
                 for line in file:
                     # Skip blank lines
