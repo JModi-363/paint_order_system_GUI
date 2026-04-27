@@ -64,14 +64,15 @@ def load_orders():
         # Initialize database if needed
         init_db()
         
-        st.write(f"DEBUG: Reading from {DB_FILE_PATH}")  # Debug line
+        st.write(f"DEBUG: Attempting to connect to DB: {DB_FILE_PATH}")  # Debug
         conn = sqlite3.connect(DB_FILE_PATH)
         cursor = conn.cursor()
+        st.write("DEBUG: Connected to DB. Executing SELECT query.")  # Debug
         cursor.execute("SELECT artist_fname, artist_lname, location, timestamp, paint_base, size, additives, additive_parts, cost FROM orders")
         rows = cursor.fetchall()
         conn.close()
+        st.write(f"DEBUG: Closed DB connection. Fetched {len(rows)} rows.")  # Debug
         
-        st.write(f"DEBUG: Found {len(rows)} rows in database")  # Debug line
         orders = []
         for row in rows:
             fname, lname, location, timestamp_str, paint_base, size, additives, additive_parts, cost = row
@@ -96,8 +97,10 @@ def load_orders():
 def save_order(order):
     """Save order to SQLite database."""
     init_db()
+    st.write(f"DEBUG: Attempting to connect to DB for saving: {DB_FILE_PATH}")  # Debug
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
+    st.write("DEBUG: Connected to DB for saving. Executing INSERT query.")  # Debug
     artist = order.get_artist()
     cursor.execute("""
         INSERT INTO orders (artist_fname, artist_lname, location, timestamp, paint_base, size, additives, additive_parts, cost)
@@ -115,6 +118,7 @@ def save_order(order):
     ))
     conn.commit()
     conn.close()
+    st.write("DEBUG: Order saved successfully and DB connection closed.")  # Debug
     print("Order saved successfully.")
 
 
