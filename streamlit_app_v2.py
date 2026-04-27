@@ -1,5 +1,3 @@
-
-
 import os
 import sqlite3
 from datetime import datetime
@@ -26,6 +24,11 @@ if 'last_additives_choice_update' not in st.session_state:
 
 # Shared database file path
 DB_FILE_PATH = os.path.join(os.path.dirname(__file__), "orders.db")
+
+# Menu file path
+menu_file_path = os.path.join(os.path.dirname(__file__), "paint_menu.txt")
+st.write(f"DEBUG: Menu file path = {menu_file_path}") # Debug
+menu = PaintMenu.from_file(menu_file_path)
 
 
 def init_db():
