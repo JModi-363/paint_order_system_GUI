@@ -184,15 +184,13 @@ else:
                 st.session_state.additive_parts_place_order = 0
                 st.session_state.last_additives_choice_place_order = additives
 
-            additive_parts_value = st.number_input(
+            st.session_state.additive_parts_place_order = st.number_input(
                 "Additive Parts",
                 min_value=0,
                 step=1,
                 value=st.session_state.additive_parts_place_order,
-                key="parts_input_place_order",
-                on_change=update_parts
+                key="parts_input_place_order"
             )
-            st.session_state.additive_parts_place_order = additive_parts_value # Update session state directly
             if st.session_state.additive_parts_place_order > 0:
                 st.write(
                     f"+$0.10 per part. Total additional: ${(st.session_state.additive_parts_place_order * 0.10):.2f}"
