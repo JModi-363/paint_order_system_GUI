@@ -39,7 +39,7 @@ DB_FILE_PATH = os.path.join(os.path.dirname(__file__), "orders.db")
 
 # Menu file path
 menu_file_path = os.path.join(os.path.dirname(__file__), "paint_menu.txt")
-st.write(f"DEBUG: Menu file path = {menu_file_path}") # Debug
+# st.write(f"DEBUG: Menu file path = {menu_file_path}") # Debug
 menu = PaintMenu.from_file(menu_file_path)
 
 
@@ -76,14 +76,14 @@ def load_orders():
         # Initialize database if needed
         init_db()
         
-        st.write(f"DEBUG: Attempting to connect to DB: {DB_FILE_PATH}")  # Debug
+        # st.write(f"DEBUG: Attempting to connect to DB: {DB_FILE_PATH}")  # Debug
         conn = sqlite3.connect(DB_FILE_PATH)
         cursor = conn.cursor()
-        st.write("DEBUG: Connected to DB. Executing SELECT query.")  # Debug
+        # st.write("DEBUG: Connected to DB. Executing SELECT query.")  # Debug
         cursor.execute("SELECT artist_fname, artist_lname, location, timestamp, paint_base, size, additives, additive_parts, cost FROM orders")
         rows = cursor.fetchall()
         conn.close()
-        st.write(f"DEBUG: Closed DB connection. Fetched {len(rows)} rows.")  # Debug
+        #st.write(f"DEBUG: Closed DB connection. Fetched {len(rows)} rows.")  # Debug
         
         orders = []
         for row in rows:
@@ -95,7 +95,7 @@ def load_orders():
             order._Paint__timestamp = timestamp
             order._Paint__cost = cost
             orders.append(order)
-            st.write(f"DEBUG: Loaded order {len(orders)}: {order}")  # Debug line
+            # st.write(f"DEBUG: Loaded order {len(orders)}: {order}")  # Debug line
         
         st.session_state.orders = orders
         return orders
@@ -109,10 +109,10 @@ def load_orders():
 def save_order(order):
     """Save order to SQLite database."""
     init_db()
-    st.write(f"DEBUG: Attempting to connect to DB for saving: {DB_FILE_PATH}")  # Debug
+    # st.write(f"DEBUG: Attempting to connect to DB for saving: {DB_FILE_PATH}")  # Debug
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
-    st.write("DEBUG: Connected to DB for saving. Executing INSERT query.")  # Debug
+    # st.write("DEBUG: Connected to DB for saving. Executing INSERT query.")  # Debug
     artist = order.get_artist()
     cursor.execute("""
         INSERT INTO orders (artist_fname, artist_lname, location, timestamp, paint_base, size, additives, additive_parts, cost)
@@ -130,17 +130,17 @@ def save_order(order):
     ))
     conn.commit()
     conn.close()
-    st.write("DEBUG: Order saved successfully and DB connection closed.")  # Debug
+    # st.write("DEBUG: Order saved successfully and DB connection closed.")  # Debug
     print("Order saved successfully.")
 
 
 def update_order_in_db(order_id, updated_order):
     """Update an existing order in the SQLite database."""
     init_db()
-    st.write(f"DEBUG: Attempting to connect to DB for updating: {DB_FILE_PATH}") # Debug
+    # st.write(f"DEBUG: Attempting to connect to DB for updating: {DB_FILE_PATH}") # Debug
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
-    st.write(f"DEBUG: Connected to DB for updating. Executing UPDATE query for ID: {order_id}") # Debug
+    # st.write(f"DEBUG: Connected to DB for updating. Executing UPDATE query for ID: {order_id}") # Debug
     artist = updated_order.get_artist()
     cursor.execute("""
         UPDATE orders
@@ -161,28 +161,28 @@ def update_order_in_db(order_id, updated_order):
     ))
     conn.commit()
     conn.close()
-    st.write(f"DEBUG: Order ID {order_id} updated successfully and DB connection closed.") # Debug
+    # st.write(f"DEBUG: Order ID {order_id} updated successfully and DB connection closed.") # Debug
     print(f"Order ID {order_id} updated successfully.")
 
 
 def delete_order_from_db(order_id):
     """Delete an order from the SQLite database."""
     init_db()
-    st.write(f"DEBUG: Attempting to connect to DB for deleting: {DB_FILE_PATH}") # Debug
+    # st.write(f"DEBUG: Attempting to connect to DB for deleting: {DB_FILE_PATH}") # Debug
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
-    st.write(f"DEBUG: Connected to DB for deleting. Executing DELETE query for ID: {order_id}") # Debug
+    # st.write(f"DEBUG: Connected to DB for deleting. Executing DELETE query for ID: {order_id}") # Debug
     cursor.execute("DELETE FROM orders WHERE id = ?", (order_id,))
     conn.commit()
     conn.close()
-    st.write(f"DEBUG: Order ID {order_id} deleted successfully and DB connection closed.") # Debug
+    # st.write(f"DEBUG: Order ID {order_id} deleted successfully and DB connection closed.") # Debug
     print(f"Order ID {order_id} deleted successfully.")
 
 
 # Main app
 st.title("Paint Order System")
-st.write(f"DEBUG: artist = {st.session_state.artist}")  # Debug
-st.write(f"DEBUG: action = {st.session_state.action}")  # Debug
+# st.write(f"DEBUG: artist = {st.session_state.artist}")  # Debug
+# st.write(f"DEBUG: action = {st.session_state.action}")  # Debug
 
 if st.session_state.artist is None:
     st.header("Artist Login")
@@ -294,9 +294,9 @@ else:
 
     elif action == "View Orders":
         st.header("View Orders")
-        st.write(f"DEBUG: Current action = {action}")  # Debug
+        # st.write(f"DEBUG: Current action = {action}")  # Debug
         orders = load_orders()
-        st.write(f"DEBUG: Loaded {len(orders)} orders")  # Debug
+        # st.write(f"DEBUG: Loaded {len(orders)} orders")  # Debug
         if not orders:
             st.info("No orders found. Would you like to place a new order?")
             if st.button("Place Order"):
